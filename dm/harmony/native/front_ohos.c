@@ -283,6 +283,13 @@ uint64_t front_game_res(int docked) {
     unsigned w, h; const char *e = getenv("DM_GAME_RES");
     if (e && sscanf(e, "%ux%u", &w, &h) == 2) return docked ? (uint64_t)h << 32 | w : (uint64_t)(h * 4 / 5) << 32 | (w * 4 / 5 + 3) / 4 * 4;
     int dm = atomic_load(&g_screen_w), sh = atomic_load(&g_screen_h);
+    // 按屏幕定（不按第一次的窗口）：电脑上窗口可拖大小，游戏只认启动时的尺寸及更小的，按窗口定会被小窗口锁死；手机上全屏窗口就是屏幕，结果不变
+    // Decide from the display (not the first window): on a PC the window can be resized and the game only accepts the start-up size or smaller,
+    // so deciding from a small first window would lock it there; on a phone the full-screen window is the display, so the result is unchanged
+    { int32_t dw = 0, dh = 0;
+      if (OH_NativeDisplayManager_GetDefaultDisplayWidth(&dw) == DISPLAY_MANAGER_OK && OH_NativeDisplayManager_GetDefaultDisplayHeight(&dh) == DISPLAY_MANAGER_OK && dw > 0 && dh > 0) {
+          static int logged; if (!logged && (dw != dm || dh != sh)) { logged = 1; LOG("画面：按屏幕 %dx%d 定出图（窗口 %dx%d）", (int)dw, (int)dh, dm, sh); }
+          dm = dw; sh = dh; } }
     unsigned bh = docked ? 900 : 720;
     if (dm > 0 && sh > 0) {
         double aspect = dm > sh ? (double)dm / sh : (double)sh / dm;   // 横屏比例（窗口首次报尺寸时可能还是竖屏）| landscape aspect (the first window size may still be portrait)
