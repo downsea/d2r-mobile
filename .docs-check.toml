@@ -1,0 +1,22 @@
+# Per-repo configuration for tools/dev/check_docs.py.
+# Rule: **write only the real exceptions, and say what justifies each one** — a config used to
+# silence the gate is worse than no gate at all.
+# Family-level criteria: nan-fedora ADR-0013 (entry budget) / ADR-0014, 0015 (index gate).
+
+# Tier (see reference/tiering.md in the skill init-dsh-project):
+#   0 = demo / experiment   1 = active single-purpose tool   2 = multi-consumer / long-lived
+tier = 2
+
+# Paths the dead-link scan skips (globs relative to the repo root). The defaults already skip
+# .git / node_modules / target / .venv / __pycache__ / dist / build; add only what is specific
+# to this repo.
+# dm/third_party/ is vendored upstream code kept byte-identical to its own upstream (CONTRIBUTING
+# rule 2 exempts it); libdeflate's README links a NEWS.md that the vendored copy does not carry.
+# We never edit vendored files, so a dead link there is not ours to fix.
+# The gate matches with pathlib.Path.match, where `**` is one segment before Python 3.13, so the
+# depths are spelled out.
+ignore_link_globs = ["dm/third_party/*/*.md", "dm/third_party/*/*/*.md", "dm/third_party/*/*/*/*.md"]
+
+# Exceptions to the tier-required file list (relative paths). **Every entry needs a reason**,
+# written below.
+allow_missing = []
